@@ -42,7 +42,7 @@ class CustomTokenCreateSerializer(TokenObtainSerializer):
         )
 
         if not self.user:
-            self.user=User.objects.filter(**params).filter()
+            self.user=User.objects.get(**params)
             if self.user and not self.user.check_password(password):
                 self.fail("invalid_password")
             if not self.user:
