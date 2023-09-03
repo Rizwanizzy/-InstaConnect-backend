@@ -2,11 +2,17 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenViewBase
-from .serializers import CustomTokenCreateSerializer
+from .serializers import CustomTokenCreateSerializer,AdminTokenCreateSerializer
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from dj_rest_auth.registration.views import SocialLoginView
 from djoser.views import TokenCreateView
+from rest_framework.decorators import api_view,permission_classes
+from rest_framework.permissions import AllowAny
+from djoser import views as djoser_views
+from djoser.conf import settings
+from django.contrib.auth import authenticate, login
+from rest_framework.views import APIView
 
 # Create your views here.
 
@@ -57,3 +63,35 @@ class AdminTokenCreateView(TokenCreateView):
 
         # If the user is not a superuser, return an error response
         return Response({"detail": "Superuser login required."}, status=status.HTTP_400_BAD_REQUEST)
+    
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def admin_login(request):
+    # Get email and password from the request data
+    email = request.data.get('email')
+    password = request.data.get('password')
+
+    # Check if a user with the given email and password exists and is a superuser
+    user = authenticate(request=request, username=email, password=password)
+    
+    if user is not None and user.is_active and user.is_superuser:
+        # User is a superuser, generate a token or perform any other desired action
+        return Response({'auth_token': 'your_token_here', 'userRole': 'superuser'})
+
+    # If authentication fails, return an error response
+    return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+class AdminLogin(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+
+        # Authenticate the user
+        user = authenticate(request, email=email, password=password)
+
+        if user is not None and user.is_active and user.is_staff:
+            # Log the user in
+            login(request, user)
+            return Response({'message': 'Admin logged in successfully', 'userRole': 'superuser'})
+
+        return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)

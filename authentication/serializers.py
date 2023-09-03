@@ -62,3 +62,18 @@ class CustomTokenCreateSerializer(TokenObtainSerializer):
         if self.user and not self.user.is_active:
             self.fail("inactive_account")
         self.fail("invalid_credentials")
+
+class AdminTokenCreateSerializer(CustomTokenCreateSerializer):
+    password =serializers.CharField(required=False,style={"input_type":"password"})
+    def validate(self, attrs):
+        
+        email=attrs.get(djoser.conf.settings.LOGIN_FIELD)
+        password=attrs.get('password')
+        
+        user=User.objects.filter(email=email).first()
+        
+        if user and user.is_active and user.is_staff:
+            
+            return super().validate(attrs)
+        
+        self.fail('invalid_credentials')
