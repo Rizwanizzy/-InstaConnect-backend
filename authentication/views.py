@@ -13,6 +13,7 @@ from djoser import views as djoser_views
 from djoser.conf import settings
 from django.contrib.auth import authenticate, login
 from rest_framework.views import APIView
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 
@@ -95,3 +96,13 @@ class AdminLogin(APIView):
             return Response({'message': 'Admin logged in successfully', 'userRole': 'superuser'})
 
         return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+    
+@api_view(['GET'])
+@login_required
+def get_user_profile(request):
+    user=request.user
+    full_name=f"{user.first_name} {user.last_name}"
+    user_data={
+        'name':full_name
+    }
+    return Response(user_data)
